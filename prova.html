@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Diagnóstico de Informática</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0;
+    color: #1f2937; /* texto principal escuro */
+}
+
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    color: #1f2937; /* garante contraste dentro do card */
+}
+
+
+h1, h2 {
+    text-align: center;
+    color: #111827; /* títulos mais escuros */
+}
+
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    color: #111827;
+}
+
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #667eea;
+    color: #ffffff; /* texto do botão branco */
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+
+button:hover {
+    background: #5a67d8;
+}
+
+.pergunta {
+    margin-bottom: 20px;
+}
+
+.opcao {
+    background: #f1f1f1;
+    margin: 5px 0;
+    color: #111827; /* opções com texto escuro */
+}
+
+
+.correto { background: #c6f6d5 !important; }
+.errado { background: #fed7d7 !important; }
+
+#cronometro {
+    text-align: right;
+    font-weight: bold;
+    color: #111827;
+}
+
+
+.hidden { display: none; }
+
+.resultado-final {
+    text-align: center;
+    margin-top: 20px;
+    color: #111827;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container" id="login">
+    <h1>Login do Aluno</h1>
+    <input type="text" id="nome" placeholder="Nome do aluno">
+    <button onclick="entrar()">Iniciar Prova</button>
+</div>
+
+<div class="container hidden" id="prova">
+    <h2>Diagnóstico</h2>
+    <div id="cronometro">Tempo: 60:00</div>
+    <div id="quiz"></div>
+    <button onclick="finalizar()">Finalizar</button>
+    <div class="resultado-final">
+        <h3 id="total"></h3>
+        <h3 id="nota"></h3>
+    </div>
+</div>
+
+<script>
+
+let aluno = "";
+let acertos = 0;
+
+function entrar() {
+    aluno = document.getElementById("nome").value;
+
+    if (aluno === "") {
+        alert("Digite seu nome!");
+        return;
+    }
+
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("prova").classList.remove("hidden");
+}
+
+const perguntas = [
+{ pergunta: "O que é informática?", opcoes: ["Animais","Processamento de informações","Comida","Planeta"], correta: 1 },
+{ pergunta: "Hardware é:", opcoes: ["Programa","Parte física","Internet","Sistema"], correta: 1 },
+{ pergunta: "Software é:", opcoes: ["Teclado","Mouse","Programas","Monitor"], correta: 2 },
+{ pergunta: "Dispositivo de entrada:", opcoes: ["Monitor","Teclado","Impressora","Caixa"], correta: 1 },
+{ pergunta: "Word serve para:", opcoes: ["Jogar","Texto","Filmes","Música"], correta: 1 },
+{ pergunta: "Inserir imagem:", opcoes: ["Arquivo","Inserir","Exibir","Revisão"], correta: 1 },
+{ pergunta: "Tabela no Word:", opcoes: ["Inserir","Arquivo","Design","Layout"], correta: 0 },
+{ pergunta: "Salvar PDF:", opcoes: ["Inserir","Salvar como","Revisão","Exibir"], correta: 1 },
+{ pergunta: "Currículo deve ter:", opcoes: ["Jogos","Dados","Fotos","Músicas"], correta: 1 },
+{ pergunta: "Currículo bom:", opcoes: ["Confuso","Claro","Errado","Bagunçado"], correta: 1 },
+
+{ pergunta: "Qual é um dispositivo de saída?", opcoes: ["Teclado","Mouse","Monitor","Scanner"], correta: 2 },
+{ pergunta: "O sistema operacional é:", opcoes: ["Hardware","Programa que gerencia o computador","Mouse","Teclado"], correta: 1 },
+{ pergunta: "Exemplo de software:", opcoes: ["Gabinete","Monitor","Word","Teclado"], correta: 2 },
+{ pergunta: "Para que serve uma tabela no Word?", opcoes: ["Jogar","Organizar dados","Desenhar","Apagar texto"], correta: 1 },
+{ pergunta: "Qual aba usamos para criar tabela?", opcoes: ["Inserir","Arquivo","Exibir","Revisão"], correta: 0 },
+{ pergunta: "Salvar arquivo serve para:", opcoes: ["Apagar","Guardar documento","Fechar PC","Imprimir"], correta: 1 },
+{ pergunta: "PDF é usado para:", opcoes: ["Editar fácil","Manter formatação","Apagar arquivo","Jogar"], correta: 1 },
+{ pergunta: "No currículo, objetivo é:", opcoes: ["Endereço","Área desejada","Telefone","Nome"], correta: 1 },
+{ pergunta: "Formação no currículo significa:", opcoes: ["Experiência","Estudos","Endereço","CPF"], correta: 1 },
+{ pergunta: "Cursos no currículo servem para:", opcoes: ["Enfeite","Mostrar qualificação","Apagar dados","Não serve"], correta: 1 }
+];
+
+function carregarQuiz() {
+    const quiz = document.getElementById("quiz");
+
+    perguntas.forEach((q, i) => {
+        let div = document.createElement("div");
+        div.classList.add("pergunta");
+
+        let html = `<p>${i+1}. ${q.pergunta}</p>`;
+
+        q.opcoes.forEach((op, j) => {
+            html += `<button class='opcao' onclick='verificar(${i}, ${j}, this)'>${op}</button>`;
+        });
+
+        html += `<p id='res${i}'></p>`;
+        div.innerHTML = html;
+        quiz.appendChild(div);
+    });
+}
+
+function verificar(i, resposta, botao) {
+    const res = document.getElementById("res" + i);
+    if (res.innerHTML !== "") return;
+
+    if (resposta === perguntas[i].correta) {
+        res.innerHTML = "✅ Acertou";
+        botao.classList.add("correto");
+        acertos++;
+    } else {
+        res.innerHTML = "❌ Errou";
+        botao.classList.add("errado");
+    }
+}
+
+function finalizar() {
+    let nota = (acertos / 10) * 10;
+
+    document.getElementById("total").innerHTML = `Aluno: ${aluno} - Acertos: ${acertos}/10`;
+    document.getElementById("nota").innerHTML = `Nota final: ${nota.toFixed(1)}`;
+}
+
+// cronômetro
+let tempo = 3600;
+function atualizarTempo() {
+    let min = Math.floor(tempo/60);
+    let seg = tempo % 60;
+
+    document.getElementById("cronometro").innerHTML =
+        `Tempo: ${String(min).padStart(2,'0')}:${String(seg).padStart(2,'0')}`;
+
+    tempo--;
+
+    if (tempo < 0) {
+        alert("Tempo esgotado!");
+        finalizar();
+        clearInterval(timer);
+    }
+}
+
+let timer = setInterval(atualizarTempo, 1000);
+
+carregarQuiz();
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
